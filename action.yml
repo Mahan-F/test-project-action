@@ -3,7 +3,7 @@ description: 'Execute all the TestProject jobs in a specific project and ensure 
 author: 'Mahan Fathi'
 runs:
   using: 'node12'
-  main: 'dist/execute-tests.js'
+  main: 'dist/index.js'
 inputs:
   project_id:
     description: 'Project ID'
