@@ -2,8 +2,6 @@
 
 const axios = require('axios')
 const core = require('@actions/core')
-const dotenv = require('dotenv')
-dotenv.config()
 
 // Keep track of all jobs
 const jobsStatus = []

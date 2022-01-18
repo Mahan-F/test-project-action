@@ -4624,14 +4624,6 @@ module.exports = eval("require")("debug");
 
 /***/ }),
 
-/***/ 1983:
-/***/ ((module) => {
-
-module.exports = eval("require")("dotenv");
-
-
-/***/ }),
-
 /***/ 9491:
 /***/ ((module) => {
 
@@ -4781,8 +4773,6 @@ var __webpack_exports__ = {};
 
 const axios = __nccwpck_require__(4737)
 const core = __nccwpck_require__(2659)
-const dotenv = __nccwpck_require__(1983)
-dotenv.config()
 
 // Keep track of all jobs
 const jobsStatus = []
