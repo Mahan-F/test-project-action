@@ -1,0 +1,17 @@
+name: 'TestProject Execute Jobs'
+description: 'Execute all the TestProject jobs in a specific project and ensure all pass.'
+author: 'Mahan Fathi'
+runs:
+  using: 'node14'
+  main: 'execute-tests.js'
+inputs:
+  project_id:
+    description: 'Project ID'
+    required: true
+  api_key:
+    description: 'API Key'
+    required: true
+
+branding:
+  icon: 'arrow-up'  
+  color: 'green'

@@ -1,0 +1,31 @@
+{
+  "name": "test-project-action",
+  "version": "1.0.0",
+  "description": "Execute all the TestProject jobs in a specific project and ensure all pass.",
+  "main": "execute-tests.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mahan-F/test-project-action.git"
+  },
+  "keywords": [
+    "Github",
+    "github-actions",
+    "github actions",
+    "TestProject",
+    "Continuous Integration",
+    "testing"
+  ],
+  "author": "Mahan Fathi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Mahan-F/test-project-action/issues"
+  },
+  "homepage": "https://github.com/Mahan-F/test-project-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "axios": "^0.25.0"
+  }
+}
