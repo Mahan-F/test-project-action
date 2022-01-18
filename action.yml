@@ -2,7 +2,7 @@ name: 'TestProject Execute Jobs'
 description: 'Execute all the TestProject jobs in a specific project and ensure all pass.'
 author: 'Mahan Fathi'
 runs:
-  using: 'node14'
+  using: 'node12'
   main: 'execute-tests.js'
 inputs:
   project_id:

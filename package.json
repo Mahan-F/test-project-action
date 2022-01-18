@@ -4,7 +4,7 @@
   "description": "Execute all the TestProject jobs in a specific project and ensure all pass.",
   "main": "execute-tests.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
