@@ -13,5 +13,5 @@ inputs:
     required: true
 
 branding:
-  icon: 'arrow-up'  
+  icon: 'check-circle'  
   color: 'green'
