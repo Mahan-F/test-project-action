@@ -4894,9 +4894,9 @@ async function periodicallyCheckJobStatus(jobs) {
 
         // Log status of the job
         if ( jobStatus.data.state === 'Passed' ) {
-          core.info(`Found ${ jobs.length } test job(s) to execute.`)
+          core.info(`Job execution ${ pendingJobs[i].executionId } (${ pendingJobs[i].name }) passed.`)
         } else {
-          core.error(`Found ${ jobs.length } test job(s) to execute.`)
+          core.error(`Job execution ${ pendingJobs[i].executionId } (${ pendingJobs[i].name }) failed.`)
         }
 
       } 
