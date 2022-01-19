@@ -4776,6 +4776,8 @@ const core = __nccwpck_require__(2659)
 
 async function main() {
 
+  core.info(`Getting a list of all jobs in project ${ strip(process.env.INPUT_PROJECT_ID) }`)
+
   // Keep track of all jobs
   const jobsStatus = []
 
