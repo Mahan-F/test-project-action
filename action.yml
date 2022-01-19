@@ -11,6 +11,10 @@ inputs:
   api_key:
     description: 'API Key'
     required: true
+  check_interval:
+    description: 'Interval in seconds to check the status of running tests'
+    required: false
+    default: '15'
 
 branding:
   icon: 'check-circle'  
