@@ -15,6 +15,10 @@ inputs:
     description: 'Interval in seconds to check the status of running tests'
     required: false
     default: '15'
+  wait_for_tests:
+    description: 'Should the action wait for tests to finish before continuing'
+    required: false
+    default: true
 
 branding:
   icon: 'check-circle'  

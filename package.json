@@ -4,6 +4,7 @@
   "description": "Execute all the TestProject jobs in a specific project and ensure all pass.",
   "main": "execute-tests.js",
   "scripts": {
+    "build": "ncc build execute-tests.js --license licenses.txt",
     "postversion": "git push && git push --tags"
   },
   "repository": {

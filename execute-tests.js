@@ -8,6 +8,7 @@ const API_HEADER = {
   'Authorization': strip(process.env.INPUT_API_KEY)
 }
 const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000
+const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === 'true'
 
 // Keep track of all jobs
 const jobsStatus = []
@@ -24,7 +25,10 @@ async function main() {
   })
 
   await executeAllJobs(jobs)
-  await periodicallyCheckJobStatus(jobs)
+
+  if ( WAIT_FOR_TESTS ) {
+    await periodicallyCheckJobStatus(jobs)
+  }
 
 }
 

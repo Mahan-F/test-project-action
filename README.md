@@ -34,3 +34,5 @@ In the above snippet, the `project_id` and `api_key` are being fetched from the 
 `api_key`: The API key of your TestProject account. Can be created [here](https://app.testproject.io/#/integrations/api)
 
 `check_interval`: The interval in **seconds** of which the action should check the status of running tests. (Recommended to not make this too short so you will not be spamming TestProject APIs)
+
+`wait_for_tests`: Whether the action should wait for the tests to complete (pass/fail) or if it should just start them and complete the action. (Default = `true`)
