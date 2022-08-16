@@ -11,6 +11,9 @@ inputs:
   api_key:
     description: 'API Key'
     required: true
+  application_url:
+    description: 'url of the application where the test-project can point'
+    required: true
   check_interval:
     description: 'Interval in seconds to check the status of running tests'
     required: false
