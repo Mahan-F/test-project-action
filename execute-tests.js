@@ -3,6 +3,10 @@
 const axios = require('axios')
 const core = require('@actions/core')
 
+// get parameter url from action input
+const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL)
+
+
 const API_URL = `https://api.testproject.io/v2/projects/${ strip(process.env.INPUT_PROJECT_ID) }/jobs`
 const API_HEADER = {
   'Authorization': strip(process.env.INPUT_API_KEY)
@@ -14,6 +18,8 @@ const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === 'true'
 const jobsStatus = []
 
 async function main() {
+
+  core.info(`Get application url ${APPLICATION_URL}`);
 
   core.info(`Getting a list of all jobs in project ${ strip(process.env.INPUT_PROJECT_ID) }`)
 
