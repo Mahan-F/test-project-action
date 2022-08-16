@@ -68,14 +68,21 @@ async function executeAllJobs(jobs) {
     for ( let i = 0; i < jobs.length; i++ ) {
   
       const executeJob = axios({
-        method: 'post',
-        url: `${ API_URL }/${ jobs[i].id }/run`,
-        headers: API_HEADER
-      }).catch( err => {
-        core.setFailed(`Execution failed for job ${ jobs[i].id } (${ jobs[i].name })`)
-        console.log(err)
-        return
-      })
+        method: "post",
+        url: `${API_URL}/${jobs[i].id}/run`,
+        headers: API_HEADER,
+        data: {
+          projectParameters: {
+            ApplicationURL: APPLICATION_URL,
+          },
+        },
+      }).catch((err) => {
+        core.setFailed(
+          `Execution failed for job ${jobs[i].id} (${jobs[i].name})`
+        );
+        console.log(err);
+        return;
+      });
 
       executionPromises.push( executeJob )
   
