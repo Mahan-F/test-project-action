@@ -83,7 +83,8 @@ async function executeAllJobs(jobs) {
         headers: API_HEADER,
         data: {
           projectParameters: {
-            ApplicationURL: APPLICATION_URL,
+            ApplicationURL:
+              "https://maiom-50ce1--pr261-new-test-project-act-clf8wpjn.web.app",
           },
         },
       }).catch((err) => {
