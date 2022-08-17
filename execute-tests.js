@@ -31,6 +31,14 @@ async function main() {
     )}`
   );
 
+  const agent = await getAgent().catch((err) => {
+    core.setFailed(`Failed to get agent with error: ${err}`);
+    console.log(err);
+    return;
+  });
+
+  core.info(" Agent : ============= : ", JSON.stringify(agent));
+
   // Get a list of jobs
   const jobs = await getJobs().catch((err) => {
     core.setFailed(`Unable to get jobs.`);
@@ -38,7 +46,7 @@ async function main() {
     return;
   });
 
-  await executeAllJobs(jobs);
+  await executeAllJobs(jobs, agent);
 
   if (WAIT_FOR_TESTS) {
     await periodicallyCheckJobStatus(jobs);
@@ -66,23 +74,44 @@ async function getJobs() {
 }
 
 /**
+ * Get a list of all jobs that exist in the given project
+ * @returns Array of jobs from TestProject API
+ */
+async function getAgent() {
+  const agent = await axios({
+    method: "get",
+    url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
+    headers: API_HEADER,
+  });
+
+  // get type of agent
+  core.info(
+    `Found ${agent.data.find((e) => e.state === "Idle")} agent(s) active`
+  );
+
+  return agent.data.find((e) => e.state === "Idle");
+}
+
+/**
  * Executes all the jobs passed in the parameter and adds them to the `jobsStatus` array
  * @param {*} jobs Array of jobs to execute
  * @returns a promise once all executions are complete
  */
-async function executeAllJobs(jobs) {
+async function executeAllJobs(jobs, agent) {
   return new Promise((resolve, reject) => {
     const executionPromises = [];
     for (let i = 0; i < jobs.length; i++) {
       core.info("============== Executing job ");
       core.info(`Executing job ${jobs[i].name} (${jobs[i].id})`);
       core.info(APPLICATION_URL);
+      core.info(agent.id);
 
       const executeJob = axios({
         method: "post",
         url: `${API_URL}/${jobs[i].id}/run`,
         headers: API_HEADER,
         data: {
+          agentId: agent.id,
           testParameters: [
             {
               data: [
