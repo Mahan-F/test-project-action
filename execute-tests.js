@@ -81,12 +81,12 @@ async function executeAllJobs(jobs) {
         method: "post",
         url: `${API_URL}/${jobs[i].id}/run`,
         headers: API_HEADER,
-        data: {
-          projectParameters: {
-            ApplicationURL:
-              "https://maiom-50ce1--pr261-new-test-project-act-clf8wpjn.web.app",
-          },
-        },
+        // data: {
+        //   projectParameters: {
+        //     ApplicationURL:
+        //       "https://maiom-50ce1--pr261-new-test-project-act-clf8wpjn.web.app",
+        //   },
+        // },
       }).catch((err) => {
         core.setFailed(
           `Execution failed for job ${jobs[i].id} (${jobs[i].name})`
