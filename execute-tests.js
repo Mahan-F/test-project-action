@@ -52,7 +52,11 @@ async function getJobs() {
     headers: API_HEADER
   })
 
-  core.info(`Found ${ jobs.data.length } test job(s) to execute.`)
+  core.info(
+    `Found ${jobs.data.length} test job(s) to execute in project ${strip(
+      process.env.INPUT_PROJECT_ID
+    )}`
+  );
 
   return jobs.data
 }
