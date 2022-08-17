@@ -3,41 +3,46 @@
 const axios = require('axios')
 const core = require('@actions/core')
 
+
 // get parameter url from action input
-const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL)
+const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL);
 
-
-const API_URL = `https://api.testproject.io/v2/projects/${ strip(process.env.INPUT_PROJECT_ID) }/jobs`
+const API_URL = `https://api.testproject.io/v2/projects/${strip(
+  process.env.INPUT_PROJECT_ID
+)}/jobs`;
 const API_HEADER = {
-  'Authorization': strip(process.env.INPUT_API_KEY)
-}
-const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000
-const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === 'true'
+  Authorization: strip(process.env.INPUT_API_KEY),
+};
+const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000;
+const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === "true";
 
 // Keep track of all jobs
-const jobsStatus = []
+const jobsStatus = [];
 
 async function main() {
-
   core.info(`Get application url `);
+  core.info(process.env.INPUT_API_KEY);
 
   core.info(APPLICATION_URL);
 
-  core.info(`Getting a list of all jobs in project ${ strip(process.env.INPUT_PROJECT_ID) }`)
+  core.info(
+    `Getting a list of all jobs in project ${strip(
+      process.env.INPUT_PROJECT_ID
+    )}`
+  );
 
   // Get a list of jobs
-  const jobs = await getJobs().catch( err => {
-    core.setFailed(`Unable to get jobs.`)
-    console.log(err)
-    return
-  })
+  const jobs = await getJobs().catch((err) => {
+    core.setFailed(`Unable to get jobs.`);
+    console.log(err);
+    return;
+  });
 
-  await executeAllJobs(jobs)
+  await executeAllJobs(jobs);
 
-  if ( WAIT_FOR_TESTS ) {
-    await periodicallyCheckJobStatus(jobs)
+  if (WAIT_FOR_TESTS) {
+    await periodicallyCheckJobStatus(jobs);
   }
-
 }
 
 /**
@@ -45,12 +50,11 @@ async function main() {
  * @returns Array of jobs from TestProject API
  */
 async function getJobs() {
-
   const jobs = await axios({
-    method: 'get',
+    method: "get",
     url: API_URL,
-    headers: API_HEADER
-  })
+    headers: API_HEADER,
+  });
 
   core.info(
     `Found ${jobs.data.length} test job(s) to execute in project ${strip(
@@ -58,7 +62,7 @@ async function getJobs() {
     )}`
   );
 
-  return jobs.data
+  return jobs.data;
 }
 
 /**
@@ -67,26 +71,28 @@ async function getJobs() {
  * @returns a promise once all executions are complete
  */
 async function executeAllJobs(jobs) {
-
   return new Promise((resolve, reject) => {
-
-    const executionPromises = []
-    for ( let i = 0; i < jobs.length; i++ ) {
-
+    const executionPromises = [];
+    for (let i = 0; i < jobs.length; i++) {
       core.info("============== Executing job ");
       core.info(`Executing job ${jobs[i].name} (${jobs[i].id})`);
-      core.inf(APPLICATION_URL);
-  
+      core.info(APPLICATION_URL);
+
       const executeJob = axios({
         method: "post",
         url: `${API_URL}/${jobs[i].id}/run`,
         headers: API_HEADER,
-        // data: {
-        //   projectParameters: {
-        //     ApplicationURL:
-        //       "https://maiom-50ce1--pr261-new-test-project-act-clf8wpjn.web.app",
-        //   },
-        // },
+        data: {
+          testParameters: [
+            {
+              data: [
+                {
+                  ApplicationURL: APPLICATION_URL,
+                },
+              ],
+            },
+          ],
+        },
       }).catch((err) => {
         core.setFailed(
           `Execution failed for job ${jobs[i].id} (${jobs[i].name}) with error: ${err}`
@@ -95,28 +101,25 @@ async function executeAllJobs(jobs) {
         return;
       });
 
-      executionPromises.push( executeJob )
-  
+      executionPromises.push(executeJob);
     }
 
-    Promise.all( executionPromises ).then( results => {
+    Promise.all(executionPromises).then((results) => {
+      results.forEach((result, i) => {
+        core.info(
+          `Executed job ${jobs[i].id} (${jobs[i].name}). Execution ID: ${result.data.id}`
+        );
 
-      results.forEach( (result, i) => {
-        core.info(`Executed job ${ jobs[i].id } (${ jobs[i].name }). Execution ID: ${ result.data.id }`)
-    
         jobsStatus.push({
           ...jobs[i],
-          status: 'Pending',
-          executionId: result.data.id
-        })
-      })
+          status: "Pending",
+          executionId: result.data.id,
+        });
+      });
 
-      return resolve(true)
-
-    })
-
-  })
-
+      return resolve(true);
+    });
+  });
 }
 
 /**

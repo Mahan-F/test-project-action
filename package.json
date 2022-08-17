@@ -27,6 +27,9 @@
   "homepage": "https://github.com/Mahan-F/test-project-action#readme",
   "dependencies": {
     "@actions/core": "^1.6.0",
-    "axios": "^0.25.0"
+    "@vercel/ncc": "^0.34.0",
+    "axios": "^0.25.0",
+    "dotenv": "^16.0.1",
+    "ncc": "^0.3.6"
   }
 }
