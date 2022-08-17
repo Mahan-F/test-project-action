@@ -19,7 +19,9 @@ const jobsStatus = []
 
 async function main() {
 
-  core.info(`Get application url ${APPLICATION_URL}`);
+  core.info(`Get application url `);
+
+  core.info(APPLICATION_URL);
 
   core.info(`Getting a list of all jobs in project ${ strip(process.env.INPUT_PROJECT_ID) }`)
 
