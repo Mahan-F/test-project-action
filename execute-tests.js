@@ -89,7 +89,7 @@ async function executeAllJobs(jobs) {
         // },
       }).catch((err) => {
         core.setFailed(
-          `Execution failed for job ${jobs[i].id} (${jobs[i].name})`
+          `Execution failed for job ${jobs[i].id} (${jobs[i].name}) with error: ${err}`
         );
         console.log(err);
         return;
