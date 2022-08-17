@@ -68,6 +68,10 @@ async function executeAllJobs(jobs) {
 
     const executionPromises = []
     for ( let i = 0; i < jobs.length; i++ ) {
+
+      core.info("============== Executing job ");
+      core.info(`Executing job ${jobs[i].name} (${jobs[i].id})`);
+      core.inf(APPLICATION_URL);
   
       const executeJob = axios({
         method: "post",
