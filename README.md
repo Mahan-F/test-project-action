@@ -24,6 +24,7 @@ jobs:
         with:
           project_id: ${{ secrets.TEST_PROJECT_ID }}
           api_key: ${{ secrets.TEST_PROJECT_API_KEY }}
+          application_url: https://app.example.dev
 ```
 
 In the above snippet, the `project_id` and `api_key` are being fetched from the GitHub project secrets. For more information about how to add and manage project secrets, read the guide from [GiHub Docs](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
@@ -32,6 +33,8 @@ In the above snippet, the `project_id` and `api_key` are being fetched from the 
 `project_id`: The ID of the project on TestProject of which you want to execute tests for.
 
 `api_key`: The API key of your TestProject account. Can be created [here](https://app.testproject.io/#/integrations/api)
+
+`application_url`: url of the application where the tests will be run
 
 `check_interval`: The interval in **seconds** of which the action should check the status of running tests. (Recommended to not make this too short so you will not be spamming TestProject APIs)
 
