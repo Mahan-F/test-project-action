@@ -62,3 +62,5 @@ In the above snippet, the `project_id` and `api_key` are being fetched from the 
 `check_interval`: The interval in **seconds** of which the action should check the status of running tests. (Recommended to not make this too short so you will not be spamming TestProject APIs)
 
 `wait_for_tests`: Whether the action should wait for the tests to complete (pass/fail) or if it should just start them and complete the action. (Default = `true`)
+
+`agent`: select a default agent in the active agents in test-project (Default = `true`)
