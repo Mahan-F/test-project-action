@@ -23,7 +23,7 @@ inputs:
     required: false
     default: true
   agent:
-    description: ''
+    description: 'Select a default agent in the active agents in test-project'
     required: false
     default: false
 
