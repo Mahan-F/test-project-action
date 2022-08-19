@@ -22,6 +22,10 @@ inputs:
     description: 'Should the action wait for tests to finish before continuing'
     required: false
     default: true
+  agent:
+    description: ''
+    required: false
+    default: false
 
 branding:
   icon: 'check-circle'  
