@@ -23,7 +23,7 @@ Import the `.env` file using the following code in file `execute-tests.js`:
 After importing the `.env` file, you can run the project using the following command:
   
   ```cmd
-  node execute-test.js
+  node execute-tests.js
   ```
 
 ## Using the action
