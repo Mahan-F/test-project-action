@@ -26,6 +26,11 @@ inputs:
     description: 'Select a default agent in the active agents in test-project'
     required: false
     default: false
+  waiting_execution_time:
+    description: 'This parameter allows to stop the execution after a time'
+    required: false
+    default: '15'
+  
 
 branding:
   icon: 'check-circle'  
