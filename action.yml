@@ -22,6 +22,10 @@ inputs:
     description: 'Should the action wait for tests to finish before continuing'
     required: false
     default: true
+  agent:
+    description: 'Select a default agent in the active agents in test-project'
+    required: false
+    default: false
 
 branding:
   icon: 'check-circle'  

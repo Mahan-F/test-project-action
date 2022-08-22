@@ -15,6 +15,7 @@ const API_HEADER = {
 };
 const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000;
 const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === "true";
+const AGENT = strip(process.env.INPUT_AGENT);
 
 // Keep track of all jobs
 const jobsStatus = [];
@@ -31,13 +32,16 @@ async function main() {
     )}`
   );
 
-  const agent = await getAgent().catch((err) => {
-    core.setFailed(`Failed to get agent with error: ${err}`);
-    console.log(err);
-    return;
-  });
+  var agentId = null;
 
-  core.info(" Agent : ============= : ", JSON.stringify(agent));
+  if (AGENT) {
+    agentId = await getAgentId().catch((err) => {
+      core.setFailed(`Failed to get agent with error: ${err}`);
+      console.log(err);
+      return;
+    });
+    core.info(`Agent id used : ${agentId}`);
+  }
 
   // Get a list of jobs
   const jobs = await getJobs().catch((err) => {
@@ -46,7 +50,7 @@ async function main() {
     return;
   });
 
-  await executeAllJobs(jobs, agent);
+  await executeAllJobs(jobs, agentId);
 
   if (WAIT_FOR_TESTS) {
     await periodicallyCheckJobStatus(jobs);
@@ -77,7 +81,7 @@ async function getJobs() {
  * Get a list of all jobs that exist in the given project
  * @returns Array of jobs from TestProject API
  */
-async function getAgent() {
+async function getAgentId() {
   const agent = await axios({
     method: "get",
     url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
@@ -89,7 +93,7 @@ async function getAgent() {
     `Found ${agent.data.find((e) => e.state === "Idle")} agent(s) active`
   );
 
-  return agent.data.find((e) => e.state === "Idle");
+  return agent.data.find((e) => e.state === "Idle").id;
 }
 
 /**
@@ -97,31 +101,26 @@ async function getAgent() {
  * @param {*} jobs Array of jobs to execute
  * @returns a promise once all executions are complete
  */
-async function executeAllJobs(jobs, agent) {
+async function executeAllJobs(jobs, agentId) {
   return new Promise((resolve, reject) => {
     const executionPromises = [];
+    core.info(`Application url : ${APPLICATION_URL}`);
     for (let i = 0; i < jobs.length; i++) {
-      core.info("============== Executing job ");
       core.info(`Executing job ${jobs[i].name} (${jobs[i].id})`);
-      core.info(APPLICATION_URL);
-      core.info(agent.id);
+
+      // init data for job
+      var data = {
+        testParameters: [{ data: [{ ApplicationURL: APPLICATION_URL }] }],
+      };
+
+      // check if agentid is passed function
+      if (agentId) data.agentId = agentId;
 
       const executeJob = axios({
         method: "post",
         url: `${API_URL}/${jobs[i].id}/run`,
         headers: API_HEADER,
-        data: {
-          agentId: agent.id,
-          testParameters: [
-            {
-              data: [
-                {
-                  ApplicationURL: APPLICATION_URL,
-                },
-              ],
-            },
-          ],
-        },
+        data: data,
       }).catch((err) => {
         core.setFailed(
           `Execution failed for job ${jobs[i].id} (${jobs[i].name}) with error: ${err}`
