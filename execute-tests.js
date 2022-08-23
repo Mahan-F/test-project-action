@@ -16,11 +16,22 @@ const API_HEADER = {
 const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000;
 const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === "true";
 const AGENT = strip(process.env.INPUT_AGENT);
+const WAITING_EXECUTION_TIME = parseInt(
+  strip(process.env.INPUT_WAITING_EXECUTION_TIME)
+);
 
 // Keep track of all jobs
 const jobsStatus = [];
 
 async function main() {
+  // Add time out to stop execution after time
+  setTimeout(() => {
+    core.setFailed(
+      `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
+    );
+    process.exit(0);
+  }, WAITING_EXECUTION_TIME * 60);
+
   core.info(`Get application url `);
   core.info(process.env.INPUT_API_KEY);
 
@@ -151,68 +162,75 @@ async function executeAllJobs(jobs, agentId) {
 }
 
 /**
- * Calls TestProject state API for every pending job execution periodically until 
+ * Calls TestProject state API for every pending job execution periodically until
  * all executions are finished (Passed/Failed)
  * @param {*} jobs Array of jobs to execute
  */
 async function periodicallyCheckJobStatus(jobs) {
+  const jobStatusInterval = setInterval(async () => {
+    const pendingJobs = jobsStatus.filter((x) => x.status === "Pending");
+    core.info(
+      `Checking status of running tests (${pendingJobs.length} test(s))`
+    );
 
-  const jobStatusInterval = setInterval( async () => {
-  
-    const pendingJobs = jobsStatus.filter( x => x.status === 'Pending' )
-    core.info(`Checking status of running tests (${ pendingJobs.length } test(s))`)
-  
-    for ( let i = 0; i < pendingJobs.length; i++ ) {
+    for (let i = 0; i < pendingJobs.length; i++) {
       const jobStatus = await axios({
-        method: 'get',
-        url: `${ API_URL }/${ pendingJobs[i].id }/executions/${ pendingJobs[i].executionId }/state`,
-        headers: API_HEADER
-      }).catch( err => {
-        core.setFailed(`Job state check failed for job ${ pendingJobs[i].id } (${ pendingJobs[i].name })`)
-        console.log(err)
-        return Promise.resolve(true)
-      })
-  
-      if ( jobStatus.data.state === 'Executing' || jobStatus.data.state === 'Ready' ) {
+        method: "get",
+        url: `${API_URL}/${pendingJobs[i].id}/executions/${pendingJobs[i].executionId}/state`,
+        headers: API_HEADER,
+      }).catch((err) => {
+        core.setFailed(
+          `Job state check failed for job ${pendingJobs[i].id} (${pendingJobs[i].name})`
+        );
+        console.log(err);
+        return Promise.resolve(true);
+      });
+
+      if (
+        jobStatus.data.state === "Executing" ||
+        jobStatus.data.state === "Ready"
+      ) {
         continue;
-      } else if ( jobStatus.data.state === 'Failed' || jobStatus.data.state === 'Passed' ) {
-        
+      } else if (
+        jobStatus.data.state === "Failed" ||
+        jobStatus.data.state === "Passed"
+      ) {
         // Update the status of the job
-        jobsStatus.find( x => x.id === pendingJobs[i].id ).status = jobStatus.data.state
+        jobsStatus.find((x) => x.id === pendingJobs[i].id).status =
+          jobStatus.data.state;
 
         // Log status of the job
-        if ( jobStatus.data.state === 'Passed' ) {
-          core.info(`Job execution ${ pendingJobs[i].executionId } (${ pendingJobs[i].name }) passed.`)
+        if (jobStatus.data.state === "Passed") {
+          core.info(
+            `Job execution ${pendingJobs[i].executionId} (${pendingJobs[i].name}) passed.`
+          );
         } else {
-          core.error(`Job execution ${ pendingJobs[i].executionId } (${ pendingJobs[i].name }) failed.`)
+          core.error(
+            `Job execution ${pendingJobs[i].executionId} (${pendingJobs[i].name}) failed.`
+          );
         }
-
-      } 
-  
+      }
     }
 
     // If no more pending jobs are left, end
-    if ( jobsStatus.filter( x => x.status === 'Pending' ).length === 0 ) {
-  
-      core.startGroup('Job data')
-      console.log(jobsStatus)
-      core.endGroup()
-  
-      core.info('Finished running tests')
-      clearInterval(jobStatusInterval)
-  
-      const failedJobs = jobsStatus.filter( x => x.status === 'Failed' )
-  
-      if ( failedJobs.length ) {
-        core.error(`Failed Tests: ${ failedJobs.map( x => x.name ).join(', ') }`)
-        core.setFailed(`${ failedJobs.length } tests failed.`)
+    if (jobsStatus.filter((x) => x.status === "Pending").length === 0) {
+      core.startGroup("Job data");
+      console.log(jobsStatus);
+      core.endGroup();
+
+      core.info("Finished running tests");
+      clearInterval(jobStatusInterval);
+
+      const failedJobs = jobsStatus.filter((x) => x.status === "Failed");
+
+      if (failedJobs.length) {
+        core.error(`Failed Tests: ${failedJobs.map((x) => x.name).join(", ")}`);
+        core.setFailed(`${failedJobs.length} tests failed.`);
       }
 
-      return Promise.resolve(true)
+      return Promise.resolve(true);
     }
-  
   }, CHECK_INTERVAL);
-
 }
 
 /**
@@ -221,7 +239,7 @@ async function periodicallyCheckJobStatus(jobs) {
  * @returns Stripped text
  */
 function strip(val) {
-  return (val || '').replace(/^\s*|\s*$/g, '');
+  return (val || "").replace(/^\s*|\s*$/g, "");
 }
 
 main()
