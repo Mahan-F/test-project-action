@@ -31,14 +31,14 @@ async function runAgent() {
      bash .github/ci/wait_for_agent.sh`,
     (error, stdout, stderr) => {
       if (error) {
-        console.log(`error: ${error.message}`);
+        core.info(`error: ${error.message}`);
         return;
       }
       if (stderr) {
-        console.log(`stderr: ${stderr}`);
+        core.info(`stderr: ${stderr}`);
         return;
       }
-      console.log(`stdout: ${stdout}`);
+      core.info(`stdout: ${stdout}`);
     }
   );
 }
