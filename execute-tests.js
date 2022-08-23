@@ -44,8 +44,8 @@ async function runAgent() {
 }
 
 async function main() {
-  core.info("Creat agent");
-  runAgent();
+  core.info("create agent");
+  await runAgent();
   // Add time out to stop execution after time
   setTimeout(() => {
     core.setFailed(
@@ -53,6 +53,8 @@ async function main() {
     );
     process.exit(0);
   }, WAITING_EXECUTION_TIME * 60);
+
+  return;
 
   core.info(`Get application url `);
   core.info(process.env.INPUT_API_KEY);
