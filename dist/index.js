@@ -5827,7 +5827,9 @@ async function runAgent() {
   exec(
     `TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
      echo $TP_API_KEY 
-     docker-compose -f .github/ci/docker-compose.yml up -d
+     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
+     cat docker-compose.yml
+     docker-compose -f docker-compose.yml up -d
      bash .github/ci/wait_for_agent.sh`,
     (error, stdout, stderr) => {
       if (error) {
