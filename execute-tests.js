@@ -27,9 +27,7 @@ async function runAgent() {
   exec(
     `TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
      echo $TP_API_KEY 
-     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
-     cat docker-compose.yml 
-     docker-compose -f docker-compose.yml up -d`,
+     docker-compose -f .github/ci/docker-compose.yml up -d`,
     (error, stdout, stderr) => {
       if (error) {
         console.log(`error: ${error.message}`);
