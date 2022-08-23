@@ -2,7 +2,7 @@
 
 const axios = require('axios')
 const core = require('@actions/core')
-
+const { exec } = require("child_process");
 
 // get parameter url from action input
 const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL);
@@ -23,7 +23,30 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
+async function runAgent() {
+  exec(
+    `TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
+     echo $TP_API_KEY 
+     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
+     cat docker-compose.yml 
+     docker-compose -f docker-compose.yml up -d`,
+    (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+      console.log(`stdout: ${stdout}`);
+    }
+  );
+}
+
 async function main() {
+  core.info("Creat agent");
+  runAgent();
   // Add time out to stop execution after time
   setTimeout(() => {
     core.setFailed(
