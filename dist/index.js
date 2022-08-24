@@ -5823,39 +5823,45 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
+async function sh(cmd) {
+  return new Promise(function (resolve, reject) {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ stdout, stderr });
+      }
+    });
+  });
+}
+
 async function runAgent() {
-  exec(
-    `TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
-     echo $TP_API_KEY 
-     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
-     cat docker-compose.yml
-     docker-compose -f docker-compose.yml up -d
-     bash .github/ci/wait_for_agent.sh`,
-    (error, stdout, stderr) => {
-      if (error) {
-        core.info(`error: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        core.info(`stderr: ${stderr}`);
-        return;
-      }
-      core.info(`stdout: ${stdout}`);
-    }
-  );
+  try {
+    let { stdout } = await sh(`
+    TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
+    echo $TP_API_KEY
+    envsubst < .github/ci/docker-compose.yml > docker-compose.yml
+    cat docker-compose.yml
+    docker-compose -f docker-compose.yml up -d`);
+
+    console.log(`stdout docker : ${stdout}`);
+    core.info(stdout);
+  } catch (error) {
+    core.setFailed(`Error : ${error}`);
+  }
 }
 
 async function main() {
   core.info("create agent");
   await runAgent();
-  return;
+
   // Add time out to stop execution after time
-  setTimeout(() => {
-    core.setFailed(
-      `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
-    );
-    process.exit(0);
-  }, WAITING_EXECUTION_TIME * 60);
+  // setTimeout(() => {
+  //   core.setFailed(
+  //     `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
+  //   );
+  //   process.exit(0);
+  // }, WAITING_EXECUTION_TIME * 60);
 
   core.info(`Get application url `);
   core.info(process.env.INPUT_API_KEY);
