@@ -5838,7 +5838,7 @@ async function sh(cmd) {
 async function runAgent() {
   try {
     let { stdout } = await sh(`
-    TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
+    export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
     echo $TP_API_KEY
     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
     cat docker-compose.yml
@@ -5873,6 +5873,8 @@ async function main() {
       process.env.INPUT_PROJECT_ID
     )}`
   );
+
+  return;
 
   var agentId = null;
 
