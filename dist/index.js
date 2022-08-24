@@ -5835,49 +5835,36 @@ async function sh(cmd) {
   });
 }
 
-async function runAgent() {
+async function runAgent(uuidAgent) {
   try {
+    core.info("Create agent");
     core.info("Run cmd export variable and run agent docker ");
     let { stdout } = await sh(`
     export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
+    export TP_AGENT_ALIAS=${uuidAgent}
     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
    `);
     core.info(`Run TestProject Agent : ${stdout}`);
+
+    // Wait for agent to run in server
+    await delay(1000 * 60 * 2).then(() =>
+      core.info("2 min done and agent is starter")
+    );
   } catch (error) {
     core.setFailed(`Error : ${error}`);
   }
 }
-
-async function waitForAgent() {
-  try {
-    core.info("Wait for Agent to Register");
-    let { stdout } = await sh(`bash .github/ci/wait_for_agent.sh`);
-    core.info(`Wait for agent : ${stdout}`);
-  } catch (error) {
-    core.setFailed(`Error : ${error}`);
-  }
-}
-
 
 async function main() {
-  // Add time out to stop execution after time
+  // Add time out to stop execution after time ${WAITING_EXECUTION_TIME}
   delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
     core.setFailed(
       `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
     );
     process.exit(0);
   });
-
-  // ===================================================
-  core.info("create agent");
-  await runAgent();
-
-  await delay(1000 * 60 * 3).then(() =>
-    core.info("3 min done and agent is starter")
-  );
-  // =====================================================
 
   core.info(`Get application url `);
   core.info(process.env.INPUT_API_KEY);
@@ -5890,12 +5877,16 @@ async function main() {
     )}`
   );
 
-  return;
-
   var agentId = null;
 
   if (AGENT) {
-    agentId = await getAgentId().catch((err) => {
+    var generatUuidAgent = uuidv4();
+    core.info(`generated UUID of agend : ${generatUuidAgent}`);
+    // ===================================================
+    await runAgent(generatUuidAgent);
+    // =====================================================
+
+    agentId = await getAgentId(generatUuidAgent).catch((err) => {
       core.setFailed(`Failed to get agent with error: ${err}`);
       console.log(err);
       return;
@@ -5941,7 +5932,7 @@ async function getJobs() {
  * Get a list of all jobs that exist in the given project
  * @returns Array of jobs from TestProject API
  */
-async function getAgentId() {
+async function getAgentId(generatUuidAgent) {
   const agent = await axios({
     method: "get",
     url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
@@ -5950,10 +5941,14 @@ async function getAgentId() {
 
   // get type of agent
   core.info(
-    `Found ${agent.data.find((e) => e.state === "Idle")} agent(s) active`
+    `Found ${agent.data.find(
+      (e) => e.state === "Idle" && e.alias === generatUuidAgent
+    )} agent(s) active`
   );
 
-  return agent.data.find((e) => e.state === "Idle").id;
+  return agent.data.find(
+    (e) => e.state === "Idle" && e.alias === generatUuidAgent
+  ).id;
 }
 
 /**
@@ -6093,6 +6088,15 @@ function strip(val) {
 
 function delay(time) {
   return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+function uuidv4() {
+  return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+    (
+      c ^
+      (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+    ).toString(16)
+  );
 }
 
 
