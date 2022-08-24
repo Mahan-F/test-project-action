@@ -60,13 +60,10 @@ async function waitForAgent() {
   }
 }
 
-function delay(time) {
-  return new Promise((resolve) => setTimeout(resolve, time));
-}
 
 async function main() {
   // Add time out to stop execution after time
-  await delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
+  delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
     core.setFailed(
       `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
     );
@@ -293,5 +290,10 @@ async function periodicallyCheckJobStatus(jobs) {
 function strip(val) {
   return (val || "").replace(/^\s*|\s*$/g, "");
 }
+
+function delay(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 
 main()
