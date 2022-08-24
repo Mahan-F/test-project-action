@@ -50,9 +50,20 @@ async function runAgent() {
   }
 }
 
+async function waitForAgent() {
+  try {
+    core.info("Wait for Agent to Register");
+    let { stdout } = await sh(`bash .github/ci/wait_for_agent.sh`);
+    core.info(`Wait for agent : ${stdout}`);
+  } catch (error) {
+    core.setFailed(`Error : ${error}`);
+  }
+}
+
 async function main() {
   core.info("create agent");
   await runAgent();
+  await waitForAgent();
 
   // Add time out to stop execution after time
   // setTimeout(() => {
