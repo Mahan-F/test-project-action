@@ -5837,17 +5837,15 @@ async function sh(cmd) {
 
 async function runAgent() {
   try {
-    await sh(`export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}`);
-
-    let { runAgent } = await sh(`
+    core.info("Run cmd export variable and run agent docker ");
+    let { stdout } = await sh(`
+    export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
+    bash .github/ci/wait_for_agent.sh
    `);
-    core.info(`Run TestProject Agent : ${runAgent}`);
-
-    let { awaitForAgent } = await sh(`bash .github/ci/wait_for_agent.sh`);
-    core.info(`Wait for Agent to Register : ${awaitForAgent}`);
+    core.info(`Run TestProject Agent : ${stdout}`);
   } catch (error) {
     core.setFailed(`Error : ${error}`);
   }
