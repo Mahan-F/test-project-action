@@ -43,7 +43,6 @@ async function runAgent() {
     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
-    bash .github/ci/wait_for_agent.sh
    `);
     core.info(`Run TestProject Agent : ${runAgent}`);
 
