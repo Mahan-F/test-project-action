@@ -60,18 +60,27 @@ async function waitForAgent() {
   }
 }
 
+function delay(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 async function main() {
+  // Add time out to stop execution after time
+  await delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
+    core.setFailed(
+      `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
+    );
+    process.exit(0);
+  });
+
+  // ===================================================
   core.info("create agent");
   await runAgent();
-  await waitForAgent();
 
-  // Add time out to stop execution after time
-  // setTimeout(() => {
-  //   core.setFailed(
-  //     `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
-  //   );
-  //   process.exit(0);
-  // }, WAITING_EXECUTION_TIME * 60);
+  await delay(1000 * 60 * 3).then(() =>
+    core.info("3 min done and agent is starter")
+  );
+  // =====================================================
 
   core.info(`Get application url `);
   core.info(process.env.INPUT_API_KEY);
