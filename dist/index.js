@@ -5653,6 +5653,14 @@ module.exports = require("child_process");
 
 /***/ }),
 
+/***/ 6113:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("crypto");
+
+/***/ }),
+
 /***/ 2361:
 /***/ ((module) => {
 
@@ -5803,6 +5811,7 @@ var __webpack_exports__ = {};
 const axios = __nccwpck_require__(6545)
 const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(2081);
+const crypto = __nccwpck_require__(6113);
 
 // get parameter url from action input
 const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL);
@@ -5823,18 +5832,6 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
-async function sh(cmd) {
-  return new Promise(function (resolve, reject) {
-    exec(cmd, (err, stdout, stderr) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ stdout, stderr });
-      }
-    });
-  });
-}
-
 async function runAgent(uuidAgent) {
   try {
     core.info("Create agent");
@@ -5854,6 +5851,7 @@ async function runAgent(uuidAgent) {
     );
   } catch (error) {
     core.setFailed(`Error : ${error}`);
+    process.exit(0);
   }
 }
 
@@ -5878,6 +5876,9 @@ async function main() {
   );
 
   var agentId = null;
+  console.log("================================= AGENT");
+  console.log(AGENT);
+  console.log("================================= AGENT ==");
 
   if (AGENT) {
     var generatUuidAgent = uuidv4();
@@ -6097,6 +6098,18 @@ function uuidv4() {
       (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
     ).toString(16)
   );
+}
+
+async function sh(cmd) {
+  return new Promise(function (resolve, reject) {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ stdout, stderr });
+      }
+    });
+  });
 }
 
 
