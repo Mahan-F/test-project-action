@@ -4843,6 +4843,7 @@ async function runAgent(uuidAgent) {
     let { stdout } = await sh(`
     export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
     export TP_AGENT_ALIAS=${uuidAgent}
+    echo TP_AGENT_ALIAS
     envsubst < .github/ci/docker-compose.yml > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
@@ -4944,14 +4945,10 @@ async function getAgentId(generatUuidAgent) {
 
   // get type of agent
   core.info(
-    `Found ${agent.data.find(
-      (e) => e.state === "Idle" && e.alias === generatUuidAgent
-    )} agent(s) active`
+    `Found ${agent.data.find((e) => e.state === "Idle")} agent(s) active`
   );
 
-  return agent.data.find(
-    (e) => e.state === "Idle" && e.alias === generatUuidAgent
-  ).id;
+  return agent.data.find((e) => e.state === "Idle").id;
 }
 
 /**
