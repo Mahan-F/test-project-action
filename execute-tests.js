@@ -5,8 +5,6 @@ const core = require('@actions/core')
 const { exec } = require("child_process");
 const uuid4 = require("uuid4");
 
-const dotenv = require("dotenv");
-dotenv.config();
 // get parameter url from action input
 const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL);
 
