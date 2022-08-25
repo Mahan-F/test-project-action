@@ -3,7 +3,8 @@
 const axios = require('axios')
 const core = require('@actions/core')
 const { exec } = require("child_process");
-const crypto = require("crypto");
+const uuid4 = require("uuid4");
+
 const dotenv = require("dotenv");
 dotenv.config();
 // get parameter url from action input
@@ -49,6 +50,7 @@ async function runAgent(uuidAgent) {
 }
 
 async function main() {
+  core.info("Start execution testproject");
   // Add time out to stop execution after time ${WAITING_EXECUTION_TIME}
   delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
     core.setFailed(
@@ -71,7 +73,7 @@ async function main() {
   var agentId = null;
 
   if (AGENT) {
-    var generatUuidAgent = uuidv4();
+    var generatUuidAgent = uuid4();
     core.info(`generated UUID of agend : ${generatUuidAgent}`);
     // ===================================================
     await runAgent(generatUuidAgent);
@@ -281,9 +283,6 @@ function delay(time) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-function uuidv4() {
-  return crypto.randomUUID();
-}
 
 async function sh(cmd) {
   return new Promise(function (resolve, reject) {
