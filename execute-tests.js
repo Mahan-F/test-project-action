@@ -25,29 +25,29 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
-// const docker = `
-// version: "3.1"
-// services:
-//   testproject-agent:
-//     image: testproject/agent:latest
-//     container_name: testproject-agent
-//     depends_on:
-//       - chrome
-//     environment:
-//       TP_API_KEY: "${TP_API_KEY}"
-//       TP_AGENT_ALIAS: "Agent auto generater"
-//       TP_AGENT_TEMP: "true"
-//       TP_SDK_PORT: "8686"
-//       CHROME: "chrome:4444"
-//       CHROME_EXT: "localhost:5555"
-//     ports:
-//     - "8585:8585"
-//   chrome:
-//     image: selenium/standalone-chrome
-//     volumes:
-//       - /dev/shm:/dev/shm
-//     ports:
-//     - "5555:4444"`;
+const docker = `
+version: "3.1"
+services:
+  testproject-agent:
+    image: testproject/agent:latest
+    container_name: testproject-agent
+    depends_on:
+      - chrome
+    environment:
+      TP_API_KEY: "${strip(process.env.INPUT_API_KEY)}"
+      TP_AGENT_ALIAS: "Agent auto generater"
+      TP_AGENT_TEMP: "true"
+      TP_SDK_PORT: "8686"
+      CHROME: "chrome:4444"
+      CHROME_EXT: "localhost:5555"
+    ports:
+    - "8585:8585"
+  chrome:
+    image: selenium/standalone-chrome
+    volumes:
+      - /dev/shm:/dev/shm
+    ports:
+    - "5555:4444"`;
 
 async function runAgent(uuidAgent) {
   try {
@@ -56,9 +56,6 @@ async function runAgent(uuidAgent) {
     let { stdout } = await sh(`
     export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
     export TP_AGENT_ALIAS=${uuidAgent}
-    echo $TP_AGENT_ALIAS
-    envsubst < ./docker-compose.yml > docker-compose.yml
-    cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
    `);
     core.info(`Run TestProject Agent : ${stdout}`);
@@ -149,21 +146,30 @@ async function getJobs() {
  * Get a list of all jobs that exist in the given project
  * @returns Array of jobs from TestProject API
  */
-async function getAgentId(generatUuidAgent) {
-  const agent = await axios({
-    method: "get",
-    url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
-    headers: API_HEADER,
-  });
+async function getAgentId(AgentAlias) {
+  try {
+    const agent = await axios({
+      method: "get",
+      url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
+      headers: API_HEADER,
+    });
 
-  // get type of agent
-  core.info(
-    `Found ${agent.data.find((e) => e.state === "Idle").alis} agent(s) active`
-  );
+    // get type of agent
+    core.info(
+      `Found ${
+        agent.data.find((e) => e.state === "Idle").alias
+      } agent(s) active`
+    );
 
-  return agent.data.find(
-    (e) => e.state === "Idle" && e.alis === generatUuidAgent
-  ).id;
+    return agent.data.find((e) => e.state === "Idle" && e.alias === AgentAlias)
+      .id;
+  } catch (error) {
+    if (error.response) {
+      console.log(error.response.data);
+      console.log(error.response.status);
+      console.log(error.response.headers);
+    }
+  }
 }
 
 /**
