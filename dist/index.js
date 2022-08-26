@@ -4836,6 +4836,30 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
+const docker = `
+version: "3.1"
+services:
+  testproject-agent:
+    image: testproject/agent:latest
+    container_name: testproject-agent
+    depends_on:
+      - chrome
+    environment:
+      TP_API_KEY: "${TP_API_KEY}"
+      TP_AGENT_ALIAS: "Agent auto generater test"
+      TP_AGENT_TEMP: "true"
+      TP_SDK_PORT: "8686"
+      CHROME: "chrome:4444"
+      CHROME_EXT: "localhost:5555"
+    ports:
+    - "8585:8585"
+  chrome:
+    image: selenium/standalone-chrome
+    volumes:
+      - /dev/shm:/dev/shm
+    ports:
+    - "5555:4444`;
+
 async function runAgent(uuidAgent) {
   try {
     core.info("Create agent");
@@ -4843,8 +4867,8 @@ async function runAgent(uuidAgent) {
     let { stdout } = await sh(`
     export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
     export TP_AGENT_ALIAS=${uuidAgent}
-    echo TP_AGENT_ALIAS
-    envsubst < .github/ci/docker-compose.yml > docker-compose.yml
+    echo $TP_AGENT_ALIAS
+    envsubst < docker > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
    `);
@@ -4945,10 +4969,12 @@ async function getAgentId(generatUuidAgent) {
 
   // get type of agent
   core.info(
-    `Found ${agent.data.find((e) => e.state === "Idle")} agent(s) active`
+    `Found ${agent.data.find((e) => e.state === "Idle").alis} agent(s) active`
   );
 
-  return agent.data.find((e) => e.state === "Idle").id;
+  return agent.data.find(
+    (e) => e.state === "Idle" && e.alis === generatUuidAgent
+  ).id;
 }
 
 /**
