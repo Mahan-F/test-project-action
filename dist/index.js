@@ -4984,7 +4984,8 @@ async function runAgent(uuidAgent) {
     let { stdout } = await sh(`
     export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
     export TP_AGENT_ALIAS=${uuidAgent}
-    docker-compose -f docker-compose.yml up -d
+    pwd
+    ls
    `);
     core.info(`Run TestProject Agent : ${stdout}`);
 
