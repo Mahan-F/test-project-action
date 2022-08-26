@@ -4865,7 +4865,6 @@ async function runAgent(uuidAgent) {
     core.info("Create agent");
     core.info("Run cmd export variable and run agent docker ");
     let { stdout } = await sh(`
-    echo $TP_AGENT_ALIAS
     envsubst < ${docker} > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d

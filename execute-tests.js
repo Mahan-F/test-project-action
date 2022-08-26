@@ -4,7 +4,8 @@ const axios = require('axios')
 const core = require('@actions/core')
 const { exec } = require("child_process");
 const uuid4 = require("uuid4");
-
+const dotenv = require("dotenv");
+dotenv.config();
 // get parameter url from action input
 const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL);
 
@@ -24,37 +25,39 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
-const docker = `
-version: "3.1"
-services:
-  testproject-agent:
-    image: testproject/agent:latest
-    container_name: testproject-agent
-    depends_on:
-      - chrome
-    environment:
-      TP_API_KEY: "${strip(process.env.INPUT_API_KEY)}"
-      TP_AGENT_ALIAS: "Agent auto generater test"
-      TP_AGENT_TEMP: "true"
-      TP_SDK_PORT: "8686"
-      CHROME: "chrome:4444"
-      CHROME_EXT: "localhost:5555"
-    ports:
-    - "8585:8585"
-  chrome:
-    image: selenium/standalone-chrome
-    volumes:
-      - /dev/shm:/dev/shm
-    ports:
-    - "5555:4444`;
+// const docker = `
+// version: "3.1"
+// services:
+//   testproject-agent:
+//     image: testproject/agent:latest
+//     container_name: testproject-agent
+//     depends_on:
+//       - chrome
+//     environment:
+//       TP_API_KEY: "${TP_API_KEY}"
+//       TP_AGENT_ALIAS: "Agent auto generater"
+//       TP_AGENT_TEMP: "true"
+//       TP_SDK_PORT: "8686"
+//       CHROME: "chrome:4444"
+//       CHROME_EXT: "localhost:5555"
+//     ports:
+//     - "8585:8585"
+//   chrome:
+//     image: selenium/standalone-chrome
+//     volumes:
+//       - /dev/shm:/dev/shm
+//     ports:
+//     - "5555:4444"`;
 
 async function runAgent(uuidAgent) {
   try {
     core.info("Create agent");
     core.info("Run cmd export variable and run agent docker ");
     let { stdout } = await sh(`
+    export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
+    export TP_AGENT_ALIAS=${uuidAgent}
     echo $TP_AGENT_ALIAS
-    envsubst < ${docker} > docker-compose.yml
+    envsubst < ./docker-compose.yml > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
    `);
