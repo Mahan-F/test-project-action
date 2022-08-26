@@ -4953,30 +4953,6 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
-const docker = `
-version: "3.1"
-services:
-  testproject-agent:
-    image: testproject/agent:latest
-    container_name: testproject-agent
-    depends_on:
-      - chrome
-    environment:
-      TP_API_KEY: "${strip(process.env.INPUT_API_KEY)}"
-      TP_AGENT_ALIAS: "Agent auto generater"
-      TP_AGENT_TEMP: "true"
-      TP_SDK_PORT: "8686"
-      CHROME: "chrome:4444"
-      CHROME_EXT: "localhost:5555"
-    ports:
-    - "8585:8585"
-  chrome:
-    image: selenium/standalone-chrome
-    volumes:
-      - /dev/shm:/dev/shm
-    ports:
-    - "5555:4444"`;
-
 async function runAgent(uuidAgent) {
   try {
     core.info("Create agent");
@@ -4987,8 +4963,6 @@ async function runAgent(uuidAgent) {
     docker-compose -f ${__dirname}/docker-compose.yml up -d
    `);
     core.info(`Run TestProject Agent : ${stdout}`);
-
-    process.exit(0);
 
     // Wait for agent to run in server
     await delay(1000 * 60 * 2).then(() =>
