@@ -4989,6 +4989,8 @@ async function runAgent(uuidAgent) {
    `);
     core.info(`Run TestProject Agent : ${stdout}`);
 
+    process.exit(0);
+
     // Wait for agent to run in server
     await delay(1000 * 60 * 2).then(() =>
       core.info("2 min done and agent is starter")
