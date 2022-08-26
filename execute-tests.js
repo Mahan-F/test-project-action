@@ -56,8 +56,7 @@ async function runAgent(uuidAgent) {
     let { stdout } = await sh(`
     export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
     export TP_AGENT_ALIAS=${uuidAgent}
-    pwd
-    ls
+    docker-compose -f ${__dirname}/docker-compose.yml up -d
    `);
     core.info(`Run TestProject Agent : ${stdout}`);
 
@@ -74,14 +73,6 @@ async function runAgent(uuidAgent) {
 }
 
 async function main() {
-
-  console.log("================== _ filename");
-  console.log(__filename);
-
-  console.log("================ _dirname");
-  console.log(__dirname);
-  return;
-
   core.info("Start execution testproject");
   // Add time out to stop execution after time ${WAITING_EXECUTION_TIME}
   delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
