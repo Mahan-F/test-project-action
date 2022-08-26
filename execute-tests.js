@@ -74,6 +74,14 @@ async function runAgent(uuidAgent) {
 }
 
 async function main() {
+
+  console.log("================== _ filename");
+  console.log(__filename);
+
+  console.log("================ _dirname");
+  console.log(__dirname);
+  return;
+
   core.info("Start execution testproject");
   // Add time out to stop execution after time ${WAITING_EXECUTION_TIME}
   delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
