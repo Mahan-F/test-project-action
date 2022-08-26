@@ -4845,7 +4845,7 @@ services:
     depends_on:
       - chrome
     environment:
-      TP_API_KEY: "${TP_API_KEY}"
+      TP_API_KEY: "${strip(process.env.INPUT_API_KEY)}"
       TP_AGENT_ALIAS: "Agent auto generater test"
       TP_AGENT_TEMP: "true"
       TP_SDK_PORT: "8686"
@@ -4865,10 +4865,8 @@ async function runAgent(uuidAgent) {
     core.info("Create agent");
     core.info("Run cmd export variable and run agent docker ");
     let { stdout } = await sh(`
-    export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
-    export TP_AGENT_ALIAS=${uuidAgent}
     echo $TP_AGENT_ALIAS
-    envsubst < docker > docker-compose.yml
+    envsubst < ${docker} > docker-compose.yml
     cat docker-compose.yml
     docker-compose -f docker-compose.yml up -d
    `);
