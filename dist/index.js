@@ -3738,6 +3738,122 @@ module.exports = {
 
 /***/ }),
 
+/***/ 2437:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const fs = __nccwpck_require__(7147)
+const path = __nccwpck_require__(1017)
+const os = __nccwpck_require__(2037)
+
+const LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg
+
+// Parser src into an Object
+function parse (src) {
+  const obj = {}
+
+  // Convert buffer to string
+  let lines = src.toString()
+
+  // Convert line breaks to same format
+  lines = lines.replace(/\r\n?/mg, '\n')
+
+  let match
+  while ((match = LINE.exec(lines)) != null) {
+    const key = match[1]
+
+    // Default undefined or null to empty string
+    let value = (match[2] || '')
+
+    // Remove whitespace
+    value = value.trim()
+
+    // Check if double quoted
+    const maybeQuote = value[0]
+
+    // Remove surrounding quotes
+    value = value.replace(/^(['"`])([\s\S]*)\1$/mg, '$2')
+
+    // Expand newlines if double quoted
+    if (maybeQuote === '"') {
+      value = value.replace(/\\n/g, '\n')
+      value = value.replace(/\\r/g, '\r')
+    }
+
+    // Add to object
+    obj[key] = value
+  }
+
+  return obj
+}
+
+function _log (message) {
+  console.log(`[dotenv][DEBUG] ${message}`)
+}
+
+function _resolveHome (envPath) {
+  return envPath[0] === '~' ? path.join(os.homedir(), envPath.slice(1)) : envPath
+}
+
+// Populates process.env from .env file
+function config (options) {
+  let dotenvPath = path.resolve(process.cwd(), '.env')
+  let encoding = 'utf8'
+  const debug = Boolean(options && options.debug)
+  const override = Boolean(options && options.override)
+
+  if (options) {
+    if (options.path != null) {
+      dotenvPath = _resolveHome(options.path)
+    }
+    if (options.encoding != null) {
+      encoding = options.encoding
+    }
+  }
+
+  try {
+    // Specifying an encoding returns a string instead of a buffer
+    const parsed = DotenvModule.parse(fs.readFileSync(dotenvPath, { encoding }))
+
+    Object.keys(parsed).forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
+        process.env[key] = parsed[key]
+      } else {
+        if (override === true) {
+          process.env[key] = parsed[key]
+        }
+
+        if (debug) {
+          if (override === true) {
+            _log(`"${key}" is already defined in \`process.env\` and WAS overwritten`)
+          } else {
+            _log(`"${key}" is already defined in \`process.env\` and was NOT overwritten`)
+          }
+        }
+      }
+    })
+
+    return { parsed }
+  } catch (e) {
+    if (debug) {
+      _log(`Failed to load ${dotenvPath} ${e.message}`)
+    }
+
+    return { error: e }
+  }
+}
+
+const DotenvModule = {
+  config,
+  parse
+}
+
+module.exports.config = DotenvModule.config
+module.exports.parse = DotenvModule.parse
+module.exports = DotenvModule
+
+
+/***/ }),
+
 /***/ 1133:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -4616,6 +4732,31 @@ exports.debug = debug; // for test
 
 /***/ }),
 
+/***/ 1868:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const crypto = __nccwpck_require__(6113);
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function valid(uuid) {
+  return uuidPattern.test(uuid);
+}
+
+function uuid4() {
+  var rnd = crypto.randomBytes(16);
+  rnd[6] = (rnd[6] & 0x0f) | 0x40;
+  rnd[8] = (rnd[8] & 0x3f) | 0x80;
+  rnd = rnd.toString("hex").match(/(.{8})(.{4})(.{4})(.{4})(.{12})/);
+  rnd.shift();
+  return rnd.join("-");
+}
+uuid4.valid = valid;
+
+module.exports = uuid4;
+
+
+/***/ }),
+
 /***/ 9975:
 /***/ ((module) => {
 
@@ -4629,6 +4770,22 @@ module.exports = eval("require")("debug");
 
 "use strict";
 module.exports = require("assert");
+
+/***/ }),
+
+/***/ 2081:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
+
+/***/ }),
+
+/***/ 6113:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("crypto");
 
 /***/ }),
 
@@ -4773,8 +4930,10 @@ var __webpack_exports__ = {};
 
 const axios = __nccwpck_require__(6545)
 const core = __nccwpck_require__(2186)
-
-
+const { exec } = __nccwpck_require__(2081);
+const uuid4 = __nccwpck_require__(1868);
+const dotenv = __nccwpck_require__(2437);
+dotenv.config();
 // get parameter url from action input
 const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL);
 
@@ -4786,11 +4945,45 @@ const API_HEADER = {
 };
 const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000;
 const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === "true";
+const AGENT = strip(process.env.INPUT_AGENT);
+const WAITING_EXECUTION_TIME = parseInt(
+  strip(process.env.INPUT_WAITING_EXECUTION_TIME)
+);
 
 // Keep track of all jobs
 const jobsStatus = [];
 
+async function runAgent(uuidAgent) {
+  try {
+    core.info("Create agent");
+    core.info("Run cmd export variable and run agent docker ");
+    let { stdout } = await sh(`
+    export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
+    export TP_AGENT_ALIAS=${uuidAgent}
+    docker-compose -f ${__dirname}/docker-compose.yml up -d
+   `);
+    core.info(`Run TestProject Agent : ${stdout}`);
+
+    // Wait for agent to run in server
+    await delay(1000 * 60 * 2).then(() =>
+      core.info("2 min done and agent is starter")
+    );
+  } catch (error) {
+    core.setFailed(`Error : ${error}`);
+    process.exit(0);
+  }
+}
+
 async function main() {
+  core.info("Start execution testproject");
+  // Add time out to stop execution after time ${WAITING_EXECUTION_TIME}
+  delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
+    core.setFailed(
+      `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
+    );
+    process.exit(0);
+  });
+
   core.info(`Get application url `);
   core.info(process.env.INPUT_API_KEY);
 
@@ -4802,13 +4995,22 @@ async function main() {
     )}`
   );
 
-  const agent = await getAgent().catch((err) => {
-    core.setFailed(`Failed to get agent with error: ${err}`);
-    console.log(err);
-    return;
-  });
+  var agentId = null;
 
-  core.info(" Agent : ============= : ", JSON.stringify(agent));
+  if (AGENT) {
+    var generatUuidAgent = uuid4();
+    core.info(`generated UUID of agend : ${generatUuidAgent}`);
+    // ===================================================
+    await runAgent(generatUuidAgent);
+    // =====================================================
+
+    agentId = await getAgentId(generatUuidAgent).catch((err) => {
+      core.setFailed(`Failed to get agent with error: ${err}`);
+      console.log(err);
+      return;
+    });
+    core.info(`Agent id used : ${agentId}`);
+  }
 
   // Get a list of jobs
   const jobs = await getJobs().catch((err) => {
@@ -4817,7 +5019,7 @@ async function main() {
     return;
   });
 
-  await executeAllJobs(jobs, agent);
+  await executeAllJobs(jobs, agentId);
 
   if (WAIT_FOR_TESTS) {
     await periodicallyCheckJobStatus(jobs);
@@ -4848,19 +5050,30 @@ async function getJobs() {
  * Get a list of all jobs that exist in the given project
  * @returns Array of jobs from TestProject API
  */
-async function getAgent() {
-  const agent = await axios({
-    method: "get",
-    url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
-    headers: API_HEADER,
-  });
+async function getAgentId(AgentAlias) {
+  try {
+    const agent = await axios({
+      method: "get",
+      url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
+      headers: API_HEADER,
+    });
 
-  // get type of agent
-  core.info(
-    `Found ${agent.data.find((e) => e.state === "Idle")} agent(s) active`
-  );
+    // get type of agent
+    core.info(
+      `Found ${
+        agent.data.find((e) => e.state === "Idle").alias
+      } agent(s) active`
+    );
 
-  return agent.data.find((e) => e.state === "Idle");
+    return agent.data.find((e) => e.state === "Idle" && e.alias === AgentAlias)
+      .id;
+  } catch (error) {
+    if (error.response) {
+      console.log(error.response.data);
+      console.log(error.response.status);
+      console.log(error.response.headers);
+    }
+  }
 }
 
 /**
@@ -4868,31 +5081,26 @@ async function getAgent() {
  * @param {*} jobs Array of jobs to execute
  * @returns a promise once all executions are complete
  */
-async function executeAllJobs(jobs, agent) {
+async function executeAllJobs(jobs, agentId) {
   return new Promise((resolve, reject) => {
     const executionPromises = [];
+    core.info(`Application url : ${APPLICATION_URL}`);
     for (let i = 0; i < jobs.length; i++) {
-      core.info("============== Executing job ");
       core.info(`Executing job ${jobs[i].name} (${jobs[i].id})`);
-      core.info(APPLICATION_URL);
-      core.info(agent.id);
+
+      // init data for job
+      var data = {
+        testParameters: [{ data: [{ ApplicationURL: APPLICATION_URL }] }],
+      };
+
+      // check if agentid is passed function
+      if (agentId) data.agentId = agentId;
 
       const executeJob = axios({
         method: "post",
         url: `${API_URL}/${jobs[i].id}/run`,
         headers: API_HEADER,
-        data: {
-          agentId: agent.id,
-          testParameters: [
-            {
-              data: [
-                {
-                  ApplicationURL: APPLICATION_URL,
-                },
-              ],
-            },
-          ],
-        },
+        data: data,
       }).catch((err) => {
         core.setFailed(
           `Execution failed for job ${jobs[i].id} (${jobs[i].name}) with error: ${err}`
@@ -4923,68 +5131,75 @@ async function executeAllJobs(jobs, agent) {
 }
 
 /**
- * Calls TestProject state API for every pending job execution periodically until 
+ * Calls TestProject state API for every pending job execution periodically until
  * all executions are finished (Passed/Failed)
  * @param {*} jobs Array of jobs to execute
  */
 async function periodicallyCheckJobStatus(jobs) {
+  const jobStatusInterval = setInterval(async () => {
+    const pendingJobs = jobsStatus.filter((x) => x.status === "Pending");
+    core.info(
+      `Checking status of running tests (${pendingJobs.length} test(s))`
+    );
 
-  const jobStatusInterval = setInterval( async () => {
-  
-    const pendingJobs = jobsStatus.filter( x => x.status === 'Pending' )
-    core.info(`Checking status of running tests (${ pendingJobs.length } test(s))`)
-  
-    for ( let i = 0; i < pendingJobs.length; i++ ) {
+    for (let i = 0; i < pendingJobs.length; i++) {
       const jobStatus = await axios({
-        method: 'get',
-        url: `${ API_URL }/${ pendingJobs[i].id }/executions/${ pendingJobs[i].executionId }/state`,
-        headers: API_HEADER
-      }).catch( err => {
-        core.setFailed(`Job state check failed for job ${ pendingJobs[i].id } (${ pendingJobs[i].name })`)
-        console.log(err)
-        return Promise.resolve(true)
-      })
-  
-      if ( jobStatus.data.state === 'Executing' || jobStatus.data.state === 'Ready' ) {
+        method: "get",
+        url: `${API_URL}/${pendingJobs[i].id}/executions/${pendingJobs[i].executionId}/state`,
+        headers: API_HEADER,
+      }).catch((err) => {
+        core.setFailed(
+          `Job state check failed for job ${pendingJobs[i].id} (${pendingJobs[i].name})`
+        );
+        console.log(err);
+        return Promise.resolve(true);
+      });
+
+      if (
+        jobStatus.data.state === "Executing" ||
+        jobStatus.data.state === "Ready"
+      ) {
         continue;
-      } else if ( jobStatus.data.state === 'Failed' || jobStatus.data.state === 'Passed' ) {
-        
+      } else if (
+        jobStatus.data.state === "Failed" ||
+        jobStatus.data.state === "Passed"
+      ) {
         // Update the status of the job
-        jobsStatus.find( x => x.id === pendingJobs[i].id ).status = jobStatus.data.state
+        jobsStatus.find((x) => x.id === pendingJobs[i].id).status =
+          jobStatus.data.state;
 
         // Log status of the job
-        if ( jobStatus.data.state === 'Passed' ) {
-          core.info(`Job execution ${ pendingJobs[i].executionId } (${ pendingJobs[i].name }) passed.`)
+        if (jobStatus.data.state === "Passed") {
+          core.info(
+            `Job execution ${pendingJobs[i].executionId} (${pendingJobs[i].name}) passed.`
+          );
         } else {
-          core.error(`Job execution ${ pendingJobs[i].executionId } (${ pendingJobs[i].name }) failed.`)
+          core.error(
+            `Job execution ${pendingJobs[i].executionId} (${pendingJobs[i].name}) failed.`
+          );
         }
-
-      } 
-  
+      }
     }
 
     // If no more pending jobs are left, end
-    if ( jobsStatus.filter( x => x.status === 'Pending' ).length === 0 ) {
-  
-      core.startGroup('Job data')
-      console.log(jobsStatus)
-      core.endGroup()
-  
-      core.info('Finished running tests')
-      clearInterval(jobStatusInterval)
-  
-      const failedJobs = jobsStatus.filter( x => x.status === 'Failed' )
-  
-      if ( failedJobs.length ) {
-        core.error(`Failed Tests: ${ failedJobs.map( x => x.name ).join(', ') }`)
-        core.setFailed(`${ failedJobs.length } tests failed.`)
+    if (jobsStatus.filter((x) => x.status === "Pending").length === 0) {
+      core.startGroup("Job data");
+      console.log(jobsStatus);
+      core.endGroup();
+
+      core.info("Finished running tests");
+      clearInterval(jobStatusInterval);
+
+      const failedJobs = jobsStatus.filter((x) => x.status === "Failed");
+
+      if (failedJobs.length) {
+        core.error(`Failed Tests: ${failedJobs.map((x) => x.name).join(", ")}`);
+        core.setFailed(`${failedJobs.length} tests failed.`);
       }
 
-      return Promise.resolve(true)
+      return Promise.resolve(true);
     }
-  
   }, CHECK_INTERVAL);
-
 }
 
 /**
@@ -4993,8 +5208,26 @@ async function periodicallyCheckJobStatus(jobs) {
  * @returns Stripped text
  */
 function strip(val) {
-  return (val || '').replace(/^\s*|\s*$/g, '');
+  return (val || "").replace(/^\s*|\s*$/g, "");
 }
+
+function delay(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+
+async function sh(cmd) {
+  return new Promise(function (resolve, reject) {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ stdout, stderr });
+      }
+    });
+  });
+}
+
 
 main()
 

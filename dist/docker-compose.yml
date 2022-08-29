@@ -1,0 +1,22 @@
+version: "3.1"
+services:
+  testproject-agent:
+    image: testproject/agent:latest
+    container_name: testproject-agent
+    depends_on:
+      - chrome
+    environment:
+      TP_API_KEY: "${TP_API_KEY}"
+      TP_AGENT_ALIAS: "${TP_AGENT_ALIAS}"
+      TP_AGENT_TEMP: "true"
+      TP_SDK_PORT: "8686"
+      CHROME: "chrome:4444"
+      CHROME_EXT: "localhost:5555"
+    ports:
+    - "8585:8585"
+  chrome:
+    image: selenium/standalone-chrome
+    volumes:
+      - ./myagent:/dev/shm
+    ports:
+    - "5555:4444"

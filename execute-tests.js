@@ -2,8 +2,10 @@
 
 const axios = require('axios')
 const core = require('@actions/core')
-
-
+const { exec } = require("child_process");
+const uuid4 = require("uuid4");
+const dotenv = require("dotenv");
+dotenv.config();
 // get parameter url from action input
 const APPLICATION_URL = strip(process.env.INPUT_APPLICATION_URL);
 
@@ -23,14 +25,36 @@ const WAITING_EXECUTION_TIME = parseInt(
 // Keep track of all jobs
 const jobsStatus = [];
 
+async function runAgent(uuidAgent) {
+  try {
+    core.info("Create agent");
+    core.info("Run cmd export variable and run agent docker ");
+    let { stdout } = await sh(`
+    export TP_API_KEY=${strip(process.env.INPUT_API_KEY)}
+    export TP_AGENT_ALIAS=${uuidAgent}
+    docker-compose -f ${__dirname}/docker-compose.yml up -d
+   `);
+    core.info(`Run TestProject Agent : ${stdout}`);
+
+    // Wait for agent to run in server
+    await delay(1000 * 60 * 2).then(() =>
+      core.info("2 min done and agent is starter")
+    );
+  } catch (error) {
+    core.setFailed(`Error : ${error}`);
+    process.exit(0);
+  }
+}
+
 async function main() {
-  // Add time out to stop execution after time
-  setTimeout(() => {
+  core.info("Start execution testproject");
+  // Add time out to stop execution after time ${WAITING_EXECUTION_TIME}
+  delay(1000 * 60 * WAITING_EXECUTION_TIME).then(() => {
     core.setFailed(
       `${WAITING_EXECUTION_TIME} minutes have passed, the execution is stopped`
     );
     process.exit(0);
-  }, WAITING_EXECUTION_TIME * 60);
+  });
 
   core.info(`Get application url `);
   core.info(process.env.INPUT_API_KEY);
@@ -46,7 +70,13 @@ async function main() {
   var agentId = null;
 
   if (AGENT) {
-    agentId = await getAgentId().catch((err) => {
+    var generatUuidAgent = uuid4();
+    core.info(`generated UUID of agend : ${generatUuidAgent}`);
+    // ===================================================
+    await runAgent(generatUuidAgent);
+    // =====================================================
+
+    agentId = await getAgentId(generatUuidAgent).catch((err) => {
       core.setFailed(`Failed to get agent with error: ${err}`);
       console.log(err);
       return;
@@ -92,19 +122,30 @@ async function getJobs() {
  * Get a list of all jobs that exist in the given project
  * @returns Array of jobs from TestProject API
  */
-async function getAgentId() {
-  const agent = await axios({
-    method: "get",
-    url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
-    headers: API_HEADER,
-  });
+async function getAgentId(AgentAlias) {
+  try {
+    const agent = await axios({
+      method: "get",
+      url: "https://api.testproject.io/v2/agents?_start=0&_limit=10",
+      headers: API_HEADER,
+    });
 
-  // get type of agent
-  core.info(
-    `Found ${agent.data.find((e) => e.state === "Idle")} agent(s) active`
-  );
+    // get type of agent
+    core.info(
+      `Found ${
+        agent.data.find((e) => e.state === "Idle").alias
+      } agent(s) active`
+    );
 
-  return agent.data.find((e) => e.state === "Idle").id;
+    return agent.data.find((e) => e.state === "Idle" && e.alias === AgentAlias)
+      .id;
+  } catch (error) {
+    if (error.response) {
+      console.log(error.response.data);
+      console.log(error.response.status);
+      console.log(error.response.headers);
+    }
+  }
 }
 
 /**
@@ -241,5 +282,23 @@ async function periodicallyCheckJobStatus(jobs) {
 function strip(val) {
   return (val || "").replace(/^\s*|\s*$/g, "");
 }
+
+function delay(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+
+async function sh(cmd) {
+  return new Promise(function (resolve, reject) {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ stdout, stderr });
+      }
+    });
+  });
+}
+
 
 main()
