@@ -1,6 +1,6 @@
-name: 'TestProject Execute Jobs'
-description: 'Execute all the TestProject jobs in a specific project and ensure all pass.'
-author: 'Mahan Fathi'
+name: 'TestProject test automation'
+description: 'Execute all the TestProject jobs in a specific project and ensure all pass. and manage agent with docker'
+author: 'www-norma-dev'
 runs:
   using: 'node12'
   main: 'dist/index.js'

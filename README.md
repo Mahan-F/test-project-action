@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: TestProject Execute Jobs
+      - name: TestProject test automation
         uses: www-norma-dev/test-project-action@v1.0
         with:
           project_id: ${{ secrets.TEST_PROJECT_ID }}
