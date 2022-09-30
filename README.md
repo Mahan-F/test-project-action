@@ -36,3 +36,10 @@ In the above snippet, the `project_id` and `api_key` are being fetched from the 
 `check_interval`: The interval in **seconds** of which the action should check the status of running tests. (Recommended to not make this too short so you will not be spamming TestProject APIs)
 
 `wait_for_tests`: Whether the action should wait for the tests to complete (pass/fail) or if it should just start them and complete the action. (Default = `true`)
+
+### More optional params for changing targeted application url. Use these two params together (useful for devs who build PR / dynamic envs for testing phase):
+
+`api_id`: appId for application associated with project_id. Use in conjunction with app_url below.  (Default = `0`)
+
+`app_url`: Update appId with new url to target. (Default = `` empty string)
+

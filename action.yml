@@ -19,7 +19,16 @@ inputs:
     description: 'Should the action wait for tests to finish before continuing'
     required: false
     default: true
-
+  app_id:
+    description: 'Application ID so we can update/pass target app url'
+    required: false
+    default: '0'
+  app_url:
+    description: 'app url (target)'
+    required: false
+    default: ''
+   
+    
 branding:
   icon: 'check-circle'  
   color: 'green'
