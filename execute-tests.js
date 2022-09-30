@@ -78,7 +78,7 @@ async function updateAppUrl() {
     });
 
    await axios ({
-      method: 'post',
+      method: 'put',
       url: API_URL_APP,
       headers: API_HEADER,
       body: params
