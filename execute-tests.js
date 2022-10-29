@@ -27,7 +27,10 @@ async function main() {
   await executeAllJobs(jobs)
 
   if ( WAIT_FOR_TESTS ) {
+    console.log('Waiting for jobs to complete')
     await periodicallyCheckJobStatus(jobs)
+  } else {
+    console.log('Not waiting for jobs to complete')
   }
 
 }

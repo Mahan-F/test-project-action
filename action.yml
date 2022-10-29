@@ -2,7 +2,7 @@ name: 'TestProject Execute Jobs'
 description: 'Execute all the TestProject jobs in a specific project and ensure all pass.'
 author: 'Mahan Fathi'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
 inputs:
   project_id:
@@ -18,7 +18,7 @@ inputs:
   wait_for_tests:
     description: 'Should the action wait for tests to finish before continuing'
     required: false
-    default: true
+    default: 'true'
 
 branding:
   icon: 'check-circle'  
