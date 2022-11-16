@@ -10,10 +10,25 @@ const API_HEADER = {
 const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000
 const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === 'true' || strip(process.env.INPUT_WAIT_FOR_TESTS) === true
 
+const API_URL_APP = `https://api.testproject.io/v2/projects/${ strip(process.env.INPUT_PROJECT_ID) }/applications/${ strip(process.env.INPUT_APP_ID) }`
+
 // Keep track of all jobs
 const jobsStatus = []
 
 async function main() {
+  
+  //update application url if optional defaults changed - SteveDevOps
+  if ( parseInt(strip(process.env.INPUT_APP_ID)) != 0 && strip(process.env.INPUT_APP_URL) != '' ) {
+
+    core.info(`Attempting to change application url to ${ strip(process.env.INPUT_APP_URL) } for appId ${ strip(process.env.INPUT_APP_ID) }`)
+
+    await updateAppUrl().catch( err => {
+      core.setFailed(`Unable to update appId with new url.`)
+      console.log(err)
+      return
+    })
+ 
+  }
 
   core.info(`Getting a list of all jobs in project ${ strip(process.env.INPUT_PROJECT_ID) }`)
 
@@ -51,6 +66,33 @@ async function getJobs() {
 
   return jobs.data
 }
+
+
+/**
+ * updates application url for project_id if INPUT_APP_ID AND INPUT_APP_URL are passed - SteveDevOps
+ */
+
+async function updateAppUrl() {
+  
+    const params = JSON.stringify({
+
+      "url": strip(process.env.INPUT_APP_URL),
+      
+    });
+
+   await axios ({
+      method: 'put',
+      url: API_URL_APP,
+      headers: API_HEADER,
+      body: params
+    }).catch( err => {
+      core.setFailed(`Execution failed for changing appId via post to ${ API_URL_APP } `)
+      console.log(err)
+      return
+    })
+
+}
+
 
 /**
  * Executes all the jobs passed in the parameter and adds them to the `jobsStatus` array
