@@ -8,7 +8,7 @@ const API_HEADER = {
   'Authorization': strip(process.env.INPUT_API_KEY)
 }
 const CHECK_INTERVAL = parseInt(strip(process.env.INPUT_CHECK_INTERVAL)) * 1000
-const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === 'true'
+const WAIT_FOR_TESTS = strip(process.env.INPUT_WAIT_FOR_TESTS) === 'true' || strip(process.env.INPUT_WAIT_FOR_TESTS) === true
 
 const API_URL_APP = `https://api.testproject.io/v2/projects/${ strip(process.env.INPUT_PROJECT_ID) }/applications/${ strip(process.env.INPUT_APP_ID) }`
 
@@ -42,7 +42,10 @@ async function main() {
   await executeAllJobs(jobs)
 
   if ( WAIT_FOR_TESTS ) {
+    console.log('Waiting for jobs to complete')
     await periodicallyCheckJobStatus(jobs)
+  } else {
+    console.log('Not waiting for jobs to complete')
   }
 
 }

@@ -2,7 +2,7 @@ name: 'TestProject Execute Jobs'
 description: 'Execute all the TestProject jobs in a specific project and ensure all pass.'
 author: 'Mahan Fathi'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
 inputs:
   project_id:
@@ -27,8 +27,6 @@ inputs:
     description: 'app url (target)'
     required: false
     default: ''
-   
-    
 branding:
   icon: 'check-circle'  
   color: 'green'
